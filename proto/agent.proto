@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package nebula.agent;
+
+service AgentService {
+  rpc RegisterAgent(RegisterRequest) returns (RegisterResponse);
+  rpc ReportMetrics(stream SystemMetrics) returns (MetricsResponse);
+  rpc ExecuteCommand(CommandRequest) returns (CommandResponse);
+  rpc TransferFile(stream FileRequest) returns (stream FileResponse);
+  rpc StreamLogs(LogRequest) returns (stream LogEntry);
+}
+
+message RegisterRequest {
+  string agent_version = 1;
+  string hostname = 2;
+  string os_name = 3;
+  string os_version = 4;
+  string kernel_version = 5;
+  string architecture = 6;
+  uint32 cpu_cores = 7;
+  string cpu_model = 8;
+  uint64 ram_total_bytes = 9;
+  uint64 disk_total_bytes = 10;
+  repeated string capabilities = 11;
+  string token = 12;
+}
+
+message RegisterResponse {
+  string node_id = 1;
+  string control_plane_version = 2;
+  uint32 metrics_interval_seconds = 3;
+}
+
+message SystemMetrics {
+  string node_id = 1;
+  double cpu_percent = 2;
+  double ram_percent = 3;
+  uint64 ram_used_bytes = 4;
+  uint64 ram_total_bytes = 5;
+  double disk_percent = 6;
+  uint64 disk_used_bytes = 7;
+  uint64 disk_total_bytes = 8;
+  uint64 net_rx_bytes = 9;
+  uint64 net_tx_bytes = 10;
+  uint32 process_count = 11;
+  double load_avg_1min = 12;
+  double load_avg_5min = 13;
+  double load_avg_15min = 14;
+  uint64 collected_at_unix_nanos = 15;
+}
+
+message MetricsResponse {
+  bool accepted = 1;
+  string message = 2;
+}
+
+message CommandRequest {
+  string command_id = 1;
+  string command = 2;
+  repeated string args = 3;
+  uint32 timeout_seconds = 4;
+  map<string, string> env = 5;
+  string working_dir = 6;
+}
+
+message CommandResponse {
+  string command_id = 1;
+  bool success = 2;
+  string stdout = 3;
+  string stderr = 4;
+  int32 exit_code = 5;
+  uint64 duration_ms = 6;
+}
+
+message FileRequest {
+  string file_id = 1;
+  string path = 2;
+  bytes content = 3;
+  uint64 total_size = 4;
+  uint32 chunk_index = 5;
+  FileDirection direction = 6;
+}
+
+enum FileDirection {
+  UPLOAD = 0;
+  DOWNLOAD = 1;
+}
+
+message FileResponse {
+  string file_id = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message LogRequest {
+  string log_id = 1;
+  string file_path = 2;
+  uint32 tail_lines = 3;
+  bool follow = 4;
+}
+
+message LogEntry {
+  string log_id = 1;
+  string line = 2;
+  uint64 timestamp_unix_nanos = 3;
+  bool is_end = 4;
+}

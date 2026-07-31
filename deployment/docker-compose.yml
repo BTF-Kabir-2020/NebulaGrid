@@ -1,0 +1,103 @@
+# ═══════════════════════════════════════════════════════════════════
+# NebulaGrid — Production Stack
+# ═══════════════════════════════════════════════════════════════════
+# Purpose:    Full production deployment with all infrastructure
+# Profiles:   none — all services start together
+# Run:        docker compose -f deployment/docker-compose.yml up -d
+#
+# Requires:
+#   - Dashboard already built: cd dashboard && npm run build
+#   - Database: PostgreSQL (included)
+#   - Cache:    Redis (included)
+#   - Bus:      NATS (included)
+#
+# Important env vars to change in production:
+#   JWT_SECRET    → generate with: openssl rand -base64 64
+#   AGENT_TOKEN   → generate with: openssl rand -base64 32
+#   POSTGRES_PASSWORD → change before deploying
+# ═══════════════════════════════════════════════════════════════════
+
+services:
+  # ─── Database ─────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: nebula-postgres
+    environment:
+      POSTGRES_DB: nebula
+      POSTGRES_USER: nebula
+      POSTGRES_PASSWORD: nebula_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nebula"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ─── Cache ────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: nebula-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ─── Message Bus ──────────────────────────────────────────
+  nats:
+    image: nats:2.10-alpine
+    container_name: nebula-nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    volumes:
+      - natsdata:/data
+
+  # ─── API Gateway ──────────────────────────────────────────
+  gateway:
+    build:
+      context: ../control-plane
+      dockerfile: ../deployment/Dockerfile.gateway
+    container_name: nebula-gateway
+    ports:
+      - "8080:8080"
+      - "9000:9000"
+    environment:
+      HTTP_PORT: 8080
+      GRPC_PORT: 9000
+      DATABASE_URL: postgres://nebula:nebula_dev@postgres:5432/nebula
+      REDIS_URL: redis://redis:6379
+      NATS_URL: nats://nats:4222
+      JWT_SECRET: change-me-in-production
+      AGENT_TOKEN: agent-token-change-me
+      RUST_LOG: info
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_started
+
+  # ─── Frontend (Static) ────────────────────────────────────
+  dashboard:
+    image: nginx:alpine
+    container_name: nebula-dashboard
+    ports:
+      - "3000:80"
+    volumes:
+      - ../dashboard/dist:/usr/share/nginx/html:ro
+    depends_on:
+      - gateway
+
+volumes:
+  pgdata:
+  redisdata:
+  natsdata:

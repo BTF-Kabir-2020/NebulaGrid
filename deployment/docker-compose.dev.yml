@@ -1,0 +1,44 @@
+# ═══════════════════════════════════════════════════════════════════
+# NebulaGrid — Dev Overrides (for deployment/docker-compose.yml)
+# ═══════════════════════════════════════════════════════════════════
+# Purpose:    Run infrastructure in Docker + services on host machine
+#             (Rust binaries run natively for faster iteration)
+# Profiles:   same as parent (none)
+# Run:        docker compose -f deployment/docker-compose.yml -f deployment/docker-compose.dev.yml up -d
+#
+# Usage:
+#   1. Start infra:  docker compose -f docker-compose.yml -f docker-compose.dev.yml up postgres redis nats -d
+#   2. Run gateway:  cd control-plane && cargo run -p nebula-gateway
+#   3. Run dash:     cd dashboard && npm run dev
+#   4. Run agent:    cd agent && cargo run -- --server http://localhost:8080 --token dev-token
+# ═══════════════════════════════════════════════════════════════════
+
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  nats:
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+
+  # Non: use local Rust binary instead of Docker build
+  gateway:
+    build: null
+    image: null
+    ports:
+      - "8080:8080"
+      - "9000:9000"
+    environment:
+      DATABASE_URL: postgres://nebula:nebula_dev@localhost:5432/nebula
+      REDIS_URL: redis://localhost:6379
+      NATS_URL: nats://localhost:4222
+      JWT_SECRET: dev-secret
+      AGENT_TOKEN: dev-agent-token
+      RUST_LOG: debug
+    network_mode: host

@@ -1,0 +1,62 @@
+# Rust
+target/
+.cargo-target/
+.cargo-target-linux/
+**/*.rs.bk
+
+# Node
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+
+# Dashboard build artifacts
+dashboard/dist/
+
+# Lab data / local build helpers
+labs/data/
+labs/*.log
+labs/gateway-build.log
+labs/deploy.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# Docker
+.docker/
+
+# Test
+coverage/
+.nyc_output/
+
+# Build
+build/
+*.o
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Proto generated
+proto/generated/
+
+# Local-only locale drafts (never publish)
+*-fa.md
+**/*-fa.md
+
+# Internal planning doc (overclaims; keep local only)
+NEBULAGRID-PLAN.md

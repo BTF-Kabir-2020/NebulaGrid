@@ -1,0 +1,146 @@
+# ═══════════════════════════════════════════════════════════════════
+# NebulaGrid — Lab / Test Stack
+# ═══════════════════════════════════════════════════════════════════
+# Purpose:    Quick local testing with profiles for selective startup
+# Profiles:
+#   core   ─ Gateway + Dashboard (no infra — uses in-memory by default)
+#   infra  ─ PostgreSQL + Redis + NATS only
+#   full   ─ Everything (core + infra combined)
+#
+# Run:
+#   docker compose -f labs/docker-compose.lab.yml --profile core up -d
+#   docker compose -f labs/docker-compose.lab.yml --profile full up -d
+#
+# Health:
+#   Gateway:  curl http://localhost:8080/api/health
+#   Dashboard: open http://localhost:5173
+#
+# This file is designed for DEVELOPMENT/TESTING only.
+# For production use → deployment/docker-compose.yml
+# ═══════════════════════════════════════════════════════════════════
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: nebula
+      POSTGRES_USER: nebula
+      POSTGRES_PASSWORD: nebula_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nebula"]
+      interval: 5s
+      timeout: 3s
+    profiles: ["infra", "full"]
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+    profiles: ["infra", "full"]
+
+  nats:
+    image: nats:2.10-alpine
+    # Host 4222 is often reserved by Windows Hyper-V; map to 14222 instead.
+    ports:
+      - "14222:4222"
+      - "8222:8222"
+    profiles: ["infra", "full"]
+
+  gateway:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile.gateway
+    ports:
+      - "8080:8080"
+    environment:
+      HTTP_PORT: 8080
+      DATABASE_URL: postgres://nebula:nebula_dev@postgres:5432/nebula
+      REDIS_URL: redis://redis:6379
+      NATS_URL: nats://nats:4222
+      JWT_SECRET: dev-secret-key-change-in-production
+      AGENT_TOKEN: dev-token
+      RUST_LOG: info
+    healthcheck:
+      test: ["CMD", "wget", "-q", "http://localhost:8080/api/health", "-O", "/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    profiles: ["core", "full"]
+
+  dashboard:
+    image: node:20-alpine
+    working_dir: /app
+    # Host 3000/3100 often reserved by Windows Hyper-V; use Vite default host port.
+    ports:
+      - "5173:3000"
+    volumes:
+      - ../dashboard:/app
+    # Dev mode: starts Vite dev server with hot reload
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 3000"
+    environment:
+      VITE_API_PROXY: http://gateway:8080
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q http://127.0.0.1:3000 -O /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    depends_on:
+      - gateway
+    profiles: ["core", "full"]
+
+  agent-sim-1:
+    build: ./agent-simulator
+    hostname: lab-agent-1
+    environment:
+      GATEWAY_URL: http://gateway:8080
+      API_USER: admin
+      API_PASS: admin123
+      AGENT_HOSTNAME: lab-agent-1.nebula.internal
+      INTERVAL_SECONDS: "15"
+      VERBOSE: "true"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    profiles: ["agents", "full"]
+
+  agent-sim-2:
+    build: ./agent-simulator
+    hostname: lab-agent-2
+    environment:
+      GATEWAY_URL: http://gateway:8080
+      API_USER: admin
+      API_PASS: admin123
+      AGENT_HOSTNAME: lab-agent-2.nebula.internal
+      INTERVAL_SECONDS: "15"
+      VERBOSE: "true"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    profiles: ["agents", "full"]
+
+  agent-sim-3:
+    build: ./agent-simulator
+    hostname: lab-agent-3
+    environment:
+      GATEWAY_URL: http://gateway:8080
+      API_USER: admin
+      API_PASS: admin123
+      AGENT_HOSTNAME: lab-agent-3.nebula.internal
+      INTERVAL_SECONDS: "15"
+      VERBOSE: "true"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    profiles: ["agents", "full"]
+
+volumes:
+  pgdata:

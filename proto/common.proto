@@ -1,0 +1,19 @@
+syntax = "proto3";
+package nebula.common;
+
+message Empty {}
+
+message Error {
+  string code = 1;
+  string message = 2;
+}
+
+message Timestamp {
+  int64 seconds = 1;
+  int32 nanos = 2;
+}
+
+message NodeIdentifier {
+  string node_id = 1;
+  string hostname = 2;
+}

@@ -1,0 +1,26 @@
+# ═══════════════════════════════════════════════════════════════
+# NebulaGrid Agent — Dockerfile (Production)
+# ═══════════════════════════════════════════════════════════════
+# Build:       docker build -f deployment/Dockerfile.agent -t nebula-agent .
+# Run:         docker run --net=host -e AGENT_SERVER_URL=... -e AGENT_TOKEN=... nebula-agent
+# ═══════════════════════════════════════════════════════════════
+
+FROM rust:slim-bookworm AS builder
+
+RUN apt-get update && apt-get install -y pkg-config libssl-dev protobuf-compiler && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY agent agent/
+COPY proto proto/
+COPY control-plane/Cargo.toml control-plane/
+COPY control-plane/Cargo.lock control-plane/
+
+RUN cargo build --release --manifest-path agent/Cargo.toml
+
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /app/agent/target/release/nebula-agent /usr/local/bin/
+
+CMD ["nebula-agent"]

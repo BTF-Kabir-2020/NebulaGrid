@@ -1,0 +1,58 @@
+replicaCount: 1
+
+image:
+  repository: nebula-grid
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+gateway:
+  service:
+    type: ClusterIP
+    port: 3000
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+controlPlane:
+  nats:
+    replicas: 3
+    storage: 10Gi
+  services:
+    port: 9000
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+postgres:
+  enabled: true
+  storage: 20Gi
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+
+redis:
+  enabled: true
+  storage: 5Gi
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: nebula-grid.local
+      paths:
+        - path: /
+          pathType: Prefix
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

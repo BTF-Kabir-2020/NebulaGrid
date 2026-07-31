@@ -1,0 +1,27 @@
+# ═══════════════════════════════════════════════════════════════
+# NebulaGrid Gateway — Dockerfile (Production)
+# ═══════════════════════════════════════════════════════════════
+# Build:       docker build -f deployment/Dockerfile.gateway -t nebula-gateway .
+# Compose:     docker compose -f deployment/docker-compose.yml up -d
+# Run:         docker run -e JWT_SECRET=... -e DATABASE_URL=... -e AGENT_TOKEN=... nebula-gateway
+# ═══════════════════════════════════════════════════════════════
+
+FROM rust:slim-bookworm AS builder
+
+RUN apt-get update && apt-get install -y pkg-config libssl-dev protobuf-compiler && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY control-plane control-plane/
+COPY proto proto/
+
+RUN cargo build --release --manifest-path control-plane/Cargo.toml --bin nebula-gateway
+
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y ca-certificates wget && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /app/control-plane/target/release/nebula-gateway /usr/local/bin/
+
+EXPOSE 8080
+
+CMD ["nebula-gateway"]

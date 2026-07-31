@@ -1,0 +1,15 @@
+# Keep gateway Docker context small (root context = repo)
+.git
+.cargo-target
+.cargo-target-linux
+**/target
+dashboard/node_modules
+**/node_modules
+labs/gateway-build.log
+**/*.log
+**/.DS_Store
+agent
+docs
+scripts
+*.md
+!control-plane/**/*.md

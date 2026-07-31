@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nebula-config
+  labels:
+    app: nebula-grid
+data:
+  HTTP_PORT: "{{ .Values.gateway.service.port }}"
+  GRPC_PORT: "{{ .Values.controlPlane.services.port }}"
+  RUST_LOG: "info"

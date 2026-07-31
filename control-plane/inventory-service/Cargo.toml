@@ -1,0 +1,21 @@
+[package]
+name = "nebula-inventory-service"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+axum.workspace = true
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+clap.workspace = true
+dotenvy.workspace = true
+thiserror.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+async-nats.workspace = true
+futures.workspace = true
+reqwest.workspace = true

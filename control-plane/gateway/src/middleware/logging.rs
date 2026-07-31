@@ -1,0 +1,18 @@
+use axum::{
+    extract::Request,
+    middleware::Next,
+    response::Response,
+};
+use tracing::info;
+
+pub async fn request_logging(req: Request, next: Next) -> Response {
+    let method = req.method().clone();
+    let uri = req.uri().clone();
+
+    let response = next.run(req).await;
+
+    let status = response.status();
+    info!("{method} {uri} → {status}");
+
+    response
+}
