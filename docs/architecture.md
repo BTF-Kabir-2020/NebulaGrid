@@ -4,7 +4,7 @@
 
 NebulaGrid is an infrastructure control-plane project (Rust + React) aimed at managing servers, containers, VMs, Kubernetes, networking, storage, and automation from one dashboard.
 
-> **Current labs runtime:** the gateway serves REST/JWT over **in-memory seed data**. Postgres/Redis/NATS may run in Compose but are not yet the system of record. Treat the diagrams below as the **target** architecture unless a section explicitly says “current”.
+> **Current runtime:** the gateway serves REST/JWT over **in-memory seed data**. Postgres/Redis/NATS may run in Compose but are not yet the system of record. Diagrams marked **Target** are the longer-term shape; **Current** is what runs today.
 
 ## Target Architecture (Complete)
 
@@ -84,16 +84,16 @@ NebulaGrid is an infrastructure control-plane project (Rust + React) aimed at ma
                     optional Rust agent
 ```
 
-### Gateway components (labs)
+### Gateway components (current)
 
 - HTTP API entrypoint with JWT auth (admin / operator / viewer roles)
 - In-memory store with seed data (Postgres/Redis/NATS env vars accepted but not wired as persistence yet)
 - Live metrics fan-out via WebSocket hub (where enabled)
-- Microservice crates exist in the workspace; labs traffic goes through the gateway in-memory APIs
+- Microservice crates exist in the workspace; traffic today goes through the gateway in-memory APIs
 
 ### Agents
 
-Rust agent collects CPU/RAM/Disk/Network and can register/report to the gateway. Labs also ship Python agent simulators.
+Rust agent collects CPU/RAM/Disk/Network and can register/report to the gateway. Compose also ships Python agent simulators for local stacks.
 
 ### Dashboard
 
@@ -109,7 +109,7 @@ Agent / simulator (interval)
        → Dashboard charts refresh
 ```
 
-## Security (labs)
+## Security
 
 - Passwords: Argon2
 - Session: JWT + refresh tokens
@@ -122,7 +122,7 @@ Agent / simulator (interval)
 |-------|------------|
 | HTTP | Axum 0.7 + Tower |
 | Async | Tokio |
-| State (labs) | In-memory seed (Postgres/Redis/NATS planned) |
+| State (current) | In-memory seed (Postgres/Redis/NATS planned) |
 | Auth | JWT + Argon2 |
 | Frontend | React 18 + TypeScript + Vite + Tailwind |
-| Packaging | Docker Compose labs + deployment Dockerfiles |
+| Packaging | Docker Compose + deployment Dockerfiles / Helm / Terraform |

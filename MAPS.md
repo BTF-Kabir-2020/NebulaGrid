@@ -147,8 +147,8 @@
 | `docs/architecture.md` | Architecture overview |
 | `docs/agent-install.md` | Agent installation guide |
 | `docs/setup.md` | Setup instructions |
-| `docs/screenshots/` | Application screenshots |
-
+| `docs/api.md` | API reference |
+| `docs/architecture.md` | Architecture |
 ### Labs
 
 | File Path | Role |
