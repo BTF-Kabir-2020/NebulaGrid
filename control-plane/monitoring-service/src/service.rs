@@ -130,10 +130,7 @@ impl MonitoringService {
             .await
             .map_err(|e| format!("Failed to parse Prometheus response: {e}"))?;
 
-        let status = data["status"]
-            .as_str()
-            .unwrap_or("error")
-            .to_string();
+        let status = data["status"].as_str().unwrap_or("error").to_string();
 
         Ok(PrometheusResult {
             status,

@@ -1,7 +1,7 @@
 use axum::{
-    Json,
     extract::{Path, State},
     http::StatusCode,
+    Json,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -104,7 +104,10 @@ pub async fn update(
     Json(body): Json<UpdateInventoryRequest>,
 ) -> Result<Json<InventoryResponse>, StatusCode> {
     let mut items = state.inventory.lock().await;
-    let item = items.iter_mut().find(|i| i.id == id).ok_or(StatusCode::NOT_FOUND)?;
+    let item = items
+        .iter_mut()
+        .find(|i| i.id == id)
+        .ok_or(StatusCode::NOT_FOUND)?;
     if let Some(name) = body.name {
         item.name = name;
     }

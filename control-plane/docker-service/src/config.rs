@@ -1,5 +1,9 @@
 #[derive(Clone, clap::Parser)]
-#[command(name = "nebula-docker-service", version, about = "NebulaGrid Docker Container Service")]
+#[command(
+    name = "nebula-docker-service",
+    version,
+    about = "NebulaGrid Docker Container Service"
+)]
 pub struct DockerServiceConfig {
     #[arg(long, env = "NATS_URL", default_value = "nats://localhost:4222")]
     pub nats_url: String,

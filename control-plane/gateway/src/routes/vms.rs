@@ -1,7 +1,11 @@
-use axum::{Json, extract::{State, Path}, http::StatusCode};
+use axum::{
+    extract::{Path, State},
+    http::StatusCode,
+    Json,
+};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 use std::sync::Arc;
+use uuid::Uuid;
 
 use crate::state::{AppState, StoredVm, StoredVmSnapshot};
 
@@ -63,9 +67,7 @@ fn vm_to_response(vm: &StoredVm) -> VmResponse {
     }
 }
 
-pub async fn list(
-    State(state): State<Arc<AppState>>,
-) -> Result<Json<Vec<VmResponse>>, StatusCode> {
+pub async fn list(State(state): State<Arc<AppState>>) -> Result<Json<Vec<VmResponse>>, StatusCode> {
     let vms = state.vms.lock().await;
     Ok(Json(vms.iter().map(vm_to_response).collect()))
 }
@@ -75,7 +77,11 @@ pub async fn get_by_id(
     Path(id): Path<Uuid>,
 ) -> Result<Json<VmResponse>, StatusCode> {
     let vms = state.vms.lock().await;
-    vms.iter().find(|v| v.id == id).map(vm_to_response).map(Json).ok_or(StatusCode::NOT_FOUND)
+    vms.iter()
+        .find(|v| v.id == id)
+        .map(vm_to_response)
+        .map(Json)
+        .ok_or(StatusCode::NOT_FOUND)
 }
 
 pub async fn create(
@@ -105,18 +111,26 @@ pub async fn update(
     Json(body): Json<UpdateVmRequest>,
 ) -> Result<Json<VmResponse>, StatusCode> {
     let mut vms = state.vms.lock().await;
-    let vm = vms.iter_mut().find(|v| v.id == id).ok_or(StatusCode::NOT_FOUND)?;
-    if let Some(name) = body.name { vm.name = name; }
-    if let Some(cores) = body.cpu_cores { vm.cpu_cores = cores; }
-    if let Some(ram) = body.ram_mb { vm.ram_mb = ram; }
-    if let Some(disk) = body.disk_gb { vm.disk_gb = disk; }
+    let vm = vms
+        .iter_mut()
+        .find(|v| v.id == id)
+        .ok_or(StatusCode::NOT_FOUND)?;
+    if let Some(name) = body.name {
+        vm.name = name;
+    }
+    if let Some(cores) = body.cpu_cores {
+        vm.cpu_cores = cores;
+    }
+    if let Some(ram) = body.ram_mb {
+        vm.ram_mb = ram;
+    }
+    if let Some(disk) = body.disk_gb {
+        vm.disk_gb = disk;
+    }
     Ok(Json(vm_to_response(vm)))
 }
 
-pub async fn delete(
-    State(state): State<Arc<AppState>>,
-    Path(id): Path<Uuid>,
-) -> StatusCode {
+pub async fn delete(State(state): State<Arc<AppState>>, Path(id): Path<Uuid>) -> StatusCode {
     let mut vms = state.vms.lock().await;
     let idx = vms.iter().position(|v| v.id == id);
     match idx {
@@ -133,12 +147,21 @@ pub async fn start(
     Path(id): Path<Uuid>,
 ) -> Result<Json<ActionResponse>, StatusCode> {
     let mut vms = state.vms.lock().await;
-    let vm = vms.iter_mut().find(|v| v.id == id).ok_or(StatusCode::NOT_FOUND)?;
+    let vm = vms
+        .iter_mut()
+        .find(|v| v.id == id)
+        .ok_or(StatusCode::NOT_FOUND)?;
     if vm.status == "running" {
-        return Ok(Json(ActionResponse { success: false, message: "VM already running".into() }));
+        return Ok(Json(ActionResponse {
+            success: false,
+            message: "VM already running".into(),
+        }));
     }
     vm.status = "running".into();
-    Ok(Json(ActionResponse { success: true, message: format!("VM {} started", vm.name) }))
+    Ok(Json(ActionResponse {
+        success: true,
+        message: format!("VM {} started", vm.name),
+    }))
 }
 
 pub async fn stop(
@@ -146,12 +169,21 @@ pub async fn stop(
     Path(id): Path<Uuid>,
 ) -> Result<Json<ActionResponse>, StatusCode> {
     let mut vms = state.vms.lock().await;
-    let vm = vms.iter_mut().find(|v| v.id == id).ok_or(StatusCode::NOT_FOUND)?;
+    let vm = vms
+        .iter_mut()
+        .find(|v| v.id == id)
+        .ok_or(StatusCode::NOT_FOUND)?;
     if vm.status == "stopped" {
-        return Ok(Json(ActionResponse { success: false, message: "VM already stopped".into() }));
+        return Ok(Json(ActionResponse {
+            success: false,
+            message: "VM already stopped".into(),
+        }));
     }
     vm.status = "stopped".into();
-    Ok(Json(ActionResponse { success: true, message: format!("VM {} stopped", vm.name) }))
+    Ok(Json(ActionResponse {
+        success: true,
+        message: format!("VM {} stopped", vm.name),
+    }))
 }
 
 pub async fn restart(
@@ -159,10 +191,16 @@ pub async fn restart(
     Path(id): Path<Uuid>,
 ) -> Result<Json<ActionResponse>, StatusCode> {
     let mut vms = state.vms.lock().await;
-    let vm = vms.iter_mut().find(|v| v.id == id).ok_or(StatusCode::NOT_FOUND)?;
+    let vm = vms
+        .iter_mut()
+        .find(|v| v.id == id)
+        .ok_or(StatusCode::NOT_FOUND)?;
     let name = vm.name.clone();
     vm.status = "running".into();
-    Ok(Json(ActionResponse { success: true, message: format!("VM {} restarted", name) }))
+    Ok(Json(ActionResponse {
+        success: true,
+        message: format!("VM {} restarted", name),
+    }))
 }
 
 pub async fn create_snapshot(
@@ -196,11 +234,15 @@ pub async fn list_snapshots(
     Path(id): Path<Uuid>,
 ) -> Result<Json<Vec<SnapshotResponse>>, StatusCode> {
     let snapshots = state.vm_snapshots.lock().await;
-    let filtered: Vec<_> = snapshots.iter().filter(|s| s.vm_id == id).map(|s| SnapshotResponse {
-        name: s.name.clone(),
-        created_at: s.created_at.clone(),
-        size_bytes: s.size_bytes,
-    }).collect();
+    let filtered: Vec<_> = snapshots
+        .iter()
+        .filter(|s| s.vm_id == id)
+        .map(|s| SnapshotResponse {
+            name: s.name.clone(),
+            created_at: s.created_at.clone(),
+            size_bytes: s.size_bytes,
+        })
+        .collect();
     Ok(Json(filtered))
 }
 
@@ -209,9 +251,15 @@ pub async fn backup(
     Path(id): Path<Uuid>,
 ) -> Result<Json<ActionResponse>, StatusCode> {
     let vms = state.vms.lock().await;
-    let vm = vms.iter().find(|v| v.id == id).ok_or(StatusCode::NOT_FOUND)?;
+    let vm = vms
+        .iter()
+        .find(|v| v.id == id)
+        .ok_or(StatusCode::NOT_FOUND)?;
     Ok(Json(ActionResponse {
         success: true,
-        message: format!("Backup initiated for VM {}. Estimated completion: 5 minutes", vm.name),
+        message: format!(
+            "Backup initiated for VM {}. Estimated completion: 5 minutes",
+            vm.name
+        ),
     }))
 }

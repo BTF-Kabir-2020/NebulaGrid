@@ -1,11 +1,15 @@
-use axum::{Json, extract::{State, Path}, http::StatusCode};
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-use std::sync::Arc;
 use argon2::{
     password_hash::{rand_core::OsRng, SaltString},
     Argon2, PasswordHasher,
 };
+use axum::{
+    extract::{Path, State},
+    http::StatusCode,
+    Json,
+};
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use uuid::Uuid;
 
 use crate::state::{AppState, StoredUser};
 
@@ -78,7 +82,12 @@ pub async fn get_by_id(
     Path(id): Path<Uuid>,
 ) -> Result<Json<UserResponse>, StatusCode> {
     let users = state.users.lock().await;
-    users.iter().find(|u| u.id == id).map(to_response).map(Json).ok_or(StatusCode::NOT_FOUND)
+    users
+        .iter()
+        .find(|u| u.id == id)
+        .map(to_response)
+        .map(Json)
+        .ok_or(StatusCode::NOT_FOUND)
 }
 
 pub async fn update(
@@ -87,17 +96,17 @@ pub async fn update(
     Json(body): Json<UpdateUserRequest>,
 ) -> Result<Json<UserResponse>, StatusCode> {
     let mut users = state.users.lock().await;
-    let user = users.iter_mut().find(|u| u.id == id).ok_or(StatusCode::NOT_FOUND)?;
+    let user = users
+        .iter_mut()
+        .find(|u| u.id == id)
+        .ok_or(StatusCode::NOT_FOUND)?;
     if let Some(email) = body.email {
         user.email = email;
     }
     Ok(Json(to_response(user)))
 }
 
-pub async fn delete(
-    State(state): State<Arc<AppState>>,
-    Path(id): Path<Uuid>,
-) -> StatusCode {
+pub async fn delete(State(state): State<Arc<AppState>>, Path(id): Path<Uuid>) -> StatusCode {
     let mut users = state.users.lock().await;
     let idx = users.iter().position(|u| u.id == id);
     match idx {

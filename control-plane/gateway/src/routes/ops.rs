@@ -1,7 +1,7 @@
 use axum::{
-    Json,
     extract::{Path, State},
     http::StatusCode,
+    Json,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -113,7 +113,10 @@ pub async fn restore_backup(
 ) -> Result<Json<BackupResponse>, StatusCode> {
     let now = chrono::Utc::now().to_rfc3339();
     let mut backups = state.backups.lock().await;
-    let backup = backups.iter_mut().find(|b| b.id == id).ok_or(StatusCode::NOT_FOUND)?;
+    let backup = backups
+        .iter_mut()
+        .find(|b| b.id == id)
+        .ok_or(StatusCode::NOT_FOUND)?;
     backup.status = "restored".into();
     backup.restored_at = Some(now.clone());
     let resp = backup_to_response(backup);
@@ -132,10 +135,7 @@ pub async fn restore_backup(
     Ok(Json(resp))
 }
 
-pub async fn delete_backup(
-    State(state): State<Arc<AppState>>,
-    Path(id): Path<Uuid>,
-) -> StatusCode {
+pub async fn delete_backup(State(state): State<Arc<AppState>>, Path(id): Path<Uuid>) -> StatusCode {
     let mut backups = state.backups.lock().await;
     let before = backups.len();
     backups.retain(|b| b.id != id);

@@ -1,8 +1,8 @@
-use std::sync::Arc;
 use async_nats::Client;
 use async_nats::Subject;
 use futures::stream::StreamExt;
-use tracing::{info, error};
+use std::sync::Arc;
+use tracing::{error, info};
 
 use crate::models::*;
 use crate::service::JobService;
@@ -20,8 +20,16 @@ async fn publish_reply(nc: &Client, reply: Option<Subject>, data: Vec<u8>) {
     }
 }
 
-pub async fn subscribe_all(nc: Client, svc: Arc<JobService>) -> Result<(), Box<dyn std::error::Error>> {
-    let sub = nc.queue_subscribe(String::from("automation.job.create"), String::from("automation-workers")).await?;
+pub async fn subscribe_all(
+    nc: Client,
+    svc: Arc<JobService>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let sub = nc
+        .queue_subscribe(
+            String::from("automation.job.create"),
+            String::from("automation-workers"),
+        )
+        .await?;
     let nc_clone = nc.clone();
     let svc_clone = svc.clone();
     tokio::spawn(async move {
@@ -39,7 +47,12 @@ pub async fn subscribe_all(nc: Client, svc: Arc<JobService>) -> Result<(), Box<d
         }
     });
 
-    let sub = nc.queue_subscribe(String::from("automation.job.list"), String::from("automation-workers")).await?;
+    let sub = nc
+        .queue_subscribe(
+            String::from("automation.job.list"),
+            String::from("automation-workers"),
+        )
+        .await?;
     let nc_clone = nc.clone();
     let svc_clone = svc.clone();
     tokio::spawn(async move {
@@ -55,7 +68,12 @@ pub async fn subscribe_all(nc: Client, svc: Arc<JobService>) -> Result<(), Box<d
         }
     });
 
-    let sub = nc.queue_subscribe(String::from("automation.job.get"), String::from("automation-workers")).await?;
+    let sub = nc
+        .queue_subscribe(
+            String::from("automation.job.get"),
+            String::from("automation-workers"),
+        )
+        .await?;
     let nc_clone = nc.clone();
     let svc_clone = svc.clone();
     tokio::spawn(async move {
@@ -73,7 +91,12 @@ pub async fn subscribe_all(nc: Client, svc: Arc<JobService>) -> Result<(), Box<d
         }
     });
 
-    let sub = nc.queue_subscribe(String::from("automation.job.logs"), String::from("automation-workers")).await?;
+    let sub = nc
+        .queue_subscribe(
+            String::from("automation.job.logs"),
+            String::from("automation-workers"),
+        )
+        .await?;
     let nc_clone = nc.clone();
     let svc_clone = svc.clone();
     tokio::spawn(async move {

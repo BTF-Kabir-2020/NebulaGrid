@@ -1,11 +1,11 @@
-﻿mod config;
+mod config;
 mod models;
 mod nats;
 mod service;
 
-use std::sync::Arc;
-use axum::{Router, routing::get, Json};
+use axum::{routing::get, Json, Router};
 use serde_json::json;
+use std::sync::Arc;
 use tracing::info;
 
 use crate::config::Config;
@@ -17,24 +17,32 @@ async fn main() -> anyhow::Result<()> {
 
     tracing_subscriber::fmt()
         .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info".into()),
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
         )
         .init();
 
-    info!("{} starting on port {}", env!("CARGO_PKG_NAME"), cfg.http_port);
+    info!(
+        "{} starting on port {}",
+        env!("CARGO_PKG_NAME"),
+        cfg.http_port
+    );
     info!("connecting to NATS at {}", cfg.nats_url);
 
-    let nc = nats::connect(&cfg.nats_url).await.map_err(|e| anyhow::anyhow!("NATS connection failed: {e}"))?;
+    let nc = nats::connect(&cfg.nats_url)
+        .await
+        .map_err(|e| anyhow::anyhow!("NATS connection failed: {e}"))?;
     let svc = Arc::new(JobService::new());
 
-    nats::subscribe_all(nc, svc.clone()).await.map_err(|e| anyhow::anyhow!("NATS subscribe failed: {e}"))?;
+    nats::subscribe_all(nc, svc.clone())
+        .await
+        .map_err(|e| anyhow::anyhow!("NATS subscribe failed: {e}"))?;
 
-    let app = Router::new()
-        .route("/health", get(health));
+    let app = Router::new().route("/health", get(health));
 
     let addr = format!("0.0.0.0:{}", cfg.http_port);
-    let listener = tokio::net::TcpListener::bind(&addr).await.map_err(|e| anyhow::anyhow!("bind failed: {e}"))?;
+    let listener = tokio::net::TcpListener::bind(&addr)
+        .await
+        .map_err(|e| anyhow::anyhow!("bind failed: {e}"))?;
     info!("HTTP server listening on {}", addr);
 
     axum::serve(listener, app)

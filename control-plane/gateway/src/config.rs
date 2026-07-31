@@ -2,7 +2,11 @@ use std::time::Duration;
 use tower_http::cors::{Any, CorsLayer};
 
 #[derive(Clone, clap::Parser)]
-#[command(name = "nebula-gateway", version, about = "NebulaGrid Control Plane Gateway")]
+#[command(
+    name = "nebula-gateway",
+    version,
+    about = "NebulaGrid Control Plane Gateway"
+)]
 pub struct GatewayConfig {
     #[arg(long, env = "HTTP_PORT", default_value = "8080")]
     pub http_port: u16,

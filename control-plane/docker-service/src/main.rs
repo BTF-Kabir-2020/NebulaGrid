@@ -1,4 +1,4 @@
-﻿use std::sync::Arc;
+use std::sync::Arc;
 
 use axum::{routing::get, Json, Router};
 use bollard::Docker;
@@ -29,10 +29,15 @@ async fn main() {
     let cfg = config::DockerServiceConfig::load();
 
     tracing_subscriber::fmt()
-        .with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| cfg.rust_log.clone().into()))
+        .with_env_filter(
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| cfg.rust_log.clone().into()),
+        )
         .init();
 
-    tracing::info!("Starting NebulaGrid Docker Service v{}", env!("CARGO_PKG_VERSION"));
+    tracing::info!(
+        "Starting NebulaGrid Docker Service v{}",
+        env!("CARGO_PKG_VERSION")
+    );
 
     let nc = async_nats::connect(&cfg.nats_url)
         .await
@@ -62,8 +67,11 @@ async fn main() {
 async fn connect_docker(socket_path: &str) -> Option<Arc<Docker>> {
     if cfg!(target_os = "windows") {
         // On Windows, try named pipe first, then TCP
-        match Docker::connect_with_local("npipe:////./pipe/docker_engine", 120, bollard::API_DEFAULT_VERSION)
-        {
+        match Docker::connect_with_local(
+            "npipe:////./pipe/docker_engine",
+            120,
+            bollard::API_DEFAULT_VERSION,
+        ) {
             Ok(d) => {
                 tracing::info!("Connected to Docker via named pipe");
                 return Some(Arc::new(d));
@@ -73,7 +81,8 @@ async fn connect_docker(socket_path: &str) -> Option<Arc<Docker>> {
             }
         }
 
-        match Docker::connect_with_http("http://localhost:2375", 120, bollard::API_DEFAULT_VERSION) {
+        match Docker::connect_with_http("http://localhost:2375", 120, bollard::API_DEFAULT_VERSION)
+        {
             Ok(d) => {
                 tracing::info!("Connected to Docker via TCP");
                 return Some(Arc::new(d));
@@ -94,7 +103,9 @@ async fn connect_docker(socket_path: &str) -> Option<Arc<Docker>> {
         }
     }
 
-    tracing::error!("Docker is not available. Service will start but container operations will fail.");
+    tracing::error!(
+        "Docker is not available. Service will start but container operations will fail."
+    );
     None
 }
 

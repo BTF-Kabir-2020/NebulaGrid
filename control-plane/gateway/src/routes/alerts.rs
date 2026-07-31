@@ -1,7 +1,11 @@
-use axum::{Json, extract::{State, Path, Query}, http::StatusCode};
+use axum::{
+    extract::{Path, Query, State},
+    http::StatusCode,
+    Json,
+};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 use std::sync::Arc;
+use uuid::Uuid;
 
 use crate::state::AppState;
 
@@ -33,23 +37,31 @@ pub async fn list(
     Query(query): Query<AlertsQuery>,
 ) -> Result<Json<Vec<AlertResponse>>, StatusCode> {
     let alerts = state.alerts.lock().await;
-    let filtered: Vec<_> = alerts.iter().filter(|a| {
-        if let Some(ref severity) = query.severity {
-            if a.severity != *severity { return false; }
-        }
-        if let Some(acknowledged) = query.acknowledged {
-            if a.acknowledged != acknowledged { return false; }
-        }
-        true
-    }).map(|a| AlertResponse {
-        id: a.id,
-        title: a.title.clone(),
-        message: a.message.clone(),
-        severity: a.severity.clone(),
-        source: a.source.clone(),
-        acknowledged: a.acknowledged,
-        created_at: a.created_at.clone(),
-    }).collect();
+    let filtered: Vec<_> = alerts
+        .iter()
+        .filter(|a| {
+            if let Some(ref severity) = query.severity {
+                if a.severity != *severity {
+                    return false;
+                }
+            }
+            if let Some(acknowledged) = query.acknowledged {
+                if a.acknowledged != acknowledged {
+                    return false;
+                }
+            }
+            true
+        })
+        .map(|a| AlertResponse {
+            id: a.id,
+            title: a.title.clone(),
+            message: a.message.clone(),
+            severity: a.severity.clone(),
+            source: a.source.clone(),
+            acknowledged: a.acknowledged,
+            created_at: a.created_at.clone(),
+        })
+        .collect();
     Ok(Json(filtered))
 }
 
@@ -58,7 +70,10 @@ pub async fn acknowledge(
     Path(id): Path<Uuid>,
 ) -> Result<Json<ActionResponse>, StatusCode> {
     let mut alerts = state.alerts.lock().await;
-    let alert = alerts.iter_mut().find(|a| a.id == id).ok_or(StatusCode::NOT_FOUND)?;
+    let alert = alerts
+        .iter_mut()
+        .find(|a| a.id == id)
+        .ok_or(StatusCode::NOT_FOUND)?;
     alert.acknowledged = true;
     Ok(Json(ActionResponse {
         success: true,

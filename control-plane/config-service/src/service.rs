@@ -1,4 +1,4 @@
-﻿use std::sync::Mutex;
+use std::sync::Mutex;
 
 use chrono::Utc;
 use uuid::Uuid;
@@ -100,7 +100,9 @@ impl ConfigService {
         let mut map: std::collections::HashMap<String, (i64, chrono::DateTime<Utc>)> =
             std::collections::HashMap::new();
         for entry in &state.entries {
-            let slot = map.entry(entry.group.clone()).or_insert((0, entry.created_at));
+            let slot = map
+                .entry(entry.group.clone())
+                .or_insert((0, entry.created_at));
             slot.0 += 1;
             if entry.created_at < slot.1 {
                 slot.1 = entry.created_at;
@@ -124,15 +126,15 @@ impl ConfigService {
     }
 }
 
-fn paginate<T: serde::Serialize>(
-    items: Vec<T>,
-    page: i64,
-    per_page: i64,
-) -> PaginatedResponse<T> {
+fn paginate<T: serde::Serialize>(items: Vec<T>, page: i64, per_page: i64) -> PaginatedResponse<T> {
     let total = items.len() as i64;
     let total_pages = ((total as f64) / (per_page as f64)).ceil() as i64;
     let offset = ((page - 1) * per_page) as usize;
-    let data = items.into_iter().skip(offset).take(per_page as usize).collect();
+    let data = items
+        .into_iter()
+        .skip(offset)
+        .take(per_page as usize)
+        .collect();
     PaginatedResponse {
         data,
         page,

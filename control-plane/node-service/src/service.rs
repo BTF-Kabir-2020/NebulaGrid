@@ -68,16 +68,18 @@ impl NodeService {
 
         if let Some(ref search) = query.search {
             let s = search.to_lowercase();
-            filtered.retain(|n| {
-                n.hostname.to_lowercase().contains(&s)
-                    || n.ip_address.contains(&s)
-            });
+            filtered
+                .retain(|n| n.hostname.to_lowercase().contains(&s) || n.ip_address.contains(&s));
         }
 
         let total = filtered.len() as i64;
         let total_pages = (total as f64 / per_page as f64).ceil() as i64;
         let offset = ((page - 1) * per_page) as usize;
-        let data: Vec<Node> = filtered.into_iter().skip(offset).take(per_page as usize).collect();
+        let data: Vec<Node> = filtered
+            .into_iter()
+            .skip(offset)
+            .take(per_page as usize)
+            .collect();
 
         PaginatedResponse {
             data,
@@ -112,19 +114,12 @@ impl NodeService {
             node.updated_at = Utc::now();
         }
 
-        state
-            .metrics
-            .entry(node_id)
-            .or_default()
-            .push(metrics);
+        state.metrics.entry(node_id).or_default().push(metrics);
     }
 
     pub fn get_latest_metrics(&self, node_id: Uuid) -> Option<NodeMetrics> {
         let state = self.state.lock().unwrap();
-        state
-            .metrics
-            .get(&node_id)
-            .and_then(|v| v.last().cloned())
+        state.metrics.get(&node_id).and_then(|v| v.last().cloned())
     }
 
     pub fn get_metrics_history(

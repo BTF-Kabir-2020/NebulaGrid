@@ -158,11 +158,7 @@ impl K8sService {
     pub fn list_pods(&self, namespace: Option<&str>) -> Vec<PodSummary> {
         let pods = self.pods.lock().unwrap();
         match namespace {
-            Some(ns) => pods
-                .iter()
-                .filter(|p| p.namespace == ns)
-                .cloned()
-                .collect(),
+            Some(ns) => pods.iter().filter(|p| p.namespace == ns).cloned().collect(),
             None => pods.clone(),
         }
     }

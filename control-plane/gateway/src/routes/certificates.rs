@@ -1,7 +1,7 @@
 use axum::{
-    Json,
     extract::{Path, State},
     http::StatusCode,
+    Json,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -61,7 +61,10 @@ pub async fn create(
         issuer: "NebulaGrid Root CA".into(),
         status: "valid".into(),
         not_after,
-        fingerprint: format!("sha256:{}", &Uuid::new_v4().to_string().replace('-', "")[..16]),
+        fingerprint: format!(
+            "sha256:{}",
+            &Uuid::new_v4().to_string().replace('-', "")[..16]
+        ),
         created_at: chrono::Utc::now().to_rfc3339(),
     };
     let resp = to_response(&cert);
@@ -74,7 +77,10 @@ pub async fn revoke(
     Path(id): Path<Uuid>,
 ) -> Result<Json<CertificateResponse>, StatusCode> {
     let mut certs = state.certificates.lock().await;
-    let cert = certs.iter_mut().find(|c| c.id == id).ok_or(StatusCode::NOT_FOUND)?;
+    let cert = certs
+        .iter_mut()
+        .find(|c| c.id == id)
+        .ok_or(StatusCode::NOT_FOUND)?;
     cert.status = "revoked".into();
     Ok(Json(to_response(cert)))
 }

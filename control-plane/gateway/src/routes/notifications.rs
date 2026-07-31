@@ -1,4 +1,8 @@
-use axum::{Json, extract::{State, Extension}, http::StatusCode};
+use axum::{
+    extract::{Extension, State},
+    http::StatusCode,
+    Json,
+};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use uuid::Uuid;
@@ -59,10 +63,18 @@ pub async fn update_prefs(
         browser_alerts: true,
         slack_webhook: None,
     });
-    if let Some(v) = body.email_alerts { entry.email_alerts = v; }
-    if let Some(v) = body.email_digest { entry.email_digest = v; }
-    if let Some(v) = body.browser_alerts { entry.browser_alerts = v; }
-    if let Some(v) = body.slack_webhook { entry.slack_webhook = v; }
+    if let Some(v) = body.email_alerts {
+        entry.email_alerts = v;
+    }
+    if let Some(v) = body.email_digest {
+        entry.email_digest = v;
+    }
+    if let Some(v) = body.browser_alerts {
+        entry.browser_alerts = v;
+    }
+    if let Some(v) = body.slack_webhook {
+        entry.slack_webhook = v;
+    }
     Ok(Json(UpdatePrefsResponse {
         message: "Notification preferences updated".into(),
     }))

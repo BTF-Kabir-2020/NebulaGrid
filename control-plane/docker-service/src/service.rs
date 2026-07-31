@@ -1,8 +1,6 @@
 use std::sync::Arc;
 
-use bollard::container::{
-    ListContainersOptions, LogsOptions, RemoveContainerOptions,
-};
+use bollard::container::{ListContainersOptions, LogsOptions, RemoveContainerOptions};
 use bollard::Docker;
 use chrono::DateTime;
 use futures::stream::StreamExt;
@@ -88,18 +86,16 @@ impl DockerService {
         };
 
         let containers = docker.list_containers(Some(options)).await.ok()?;
-        let container = containers
-            .into_iter()
-            .find(|c| {
-                let cid = c.id.as_deref().unwrap_or("");
-                let name = c
-                    .names
-                    .as_ref()
-                    .and_then(|n| n.first())
-                    .map(|n| n.trim_start_matches('/'))
-                    .unwrap_or("");
-                cid == id || cid.starts_with(id) || name == id
-            })?;
+        let container = containers.into_iter().find(|c| {
+            let cid = c.id.as_deref().unwrap_or("");
+            let name = c
+                .names
+                .as_ref()
+                .and_then(|n| n.first())
+                .map(|n| n.trim_start_matches('/'))
+                .unwrap_or("");
+            cid == id || cid.starts_with(id) || name == id
+        })?;
 
         let ports = container
             .ports
@@ -151,7 +147,13 @@ impl DockerService {
             }
         };
 
-        match docker.start_container::<String>(id, None::<bollard::container::StartContainerOptions<String>>).await {
+        match docker
+            .start_container::<String>(
+                id,
+                None::<bollard::container::StartContainerOptions<String>>,
+            )
+            .await
+        {
             Ok(_) => ActionResult {
                 success: true,
                 message: "Container started successfully".to_string(),
@@ -177,7 +179,10 @@ impl DockerService {
             }
         };
 
-        match docker.stop_container(id, None::<bollard::container::StopContainerOptions>).await {
+        match docker
+            .stop_container(id, None::<bollard::container::StopContainerOptions>)
+            .await
+        {
             Ok(_) => ActionResult {
                 success: true,
                 message: "Container stopped successfully".to_string(),
@@ -203,7 +208,10 @@ impl DockerService {
             }
         };
 
-        match docker.restart_container(id, None::<bollard::container::RestartContainerOptions>).await {
+        match docker
+            .restart_container(id, None::<bollard::container::RestartContainerOptions>)
+            .await
+        {
             Ok(_) => ActionResult {
                 success: true,
                 message: "Container restarted successfully".to_string(),

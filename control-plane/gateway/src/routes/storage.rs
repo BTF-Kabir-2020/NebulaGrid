@@ -1,7 +1,7 @@
 use axum::{
-    Json,
     extract::{Path, State},
     http::StatusCode,
+    Json,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -172,7 +172,10 @@ pub async fn update_pool(
     Json(body): Json<UpdatePoolRequest>,
 ) -> Result<Json<PoolResponse>, StatusCode> {
     let mut pools = state.storage_pools.lock().await;
-    let pool = pools.iter_mut().find(|p| p.id == id).ok_or(StatusCode::NOT_FOUND)?;
+    let pool = pools
+        .iter_mut()
+        .find(|p| p.id == id)
+        .ok_or(StatusCode::NOT_FOUND)?;
     if let Some(name) = body.name {
         pool.name = name;
     }
@@ -192,10 +195,7 @@ pub async fn update_pool(
     Ok(Json(pool_to_response(pool)))
 }
 
-pub async fn delete_pool(
-    State(state): State<Arc<AppState>>,
-    Path(id): Path<Uuid>,
-) -> StatusCode {
+pub async fn delete_pool(State(state): State<Arc<AppState>>, Path(id): Path<Uuid>) -> StatusCode {
     {
         let volumes = state.volumes.lock().await;
         if volumes.iter().any(|v| v.pool_id == id) {
@@ -227,7 +227,10 @@ pub async fn update_volume(
     Json(body): Json<UpdateVolumeRequest>,
 ) -> Result<Json<VolumeResponse>, StatusCode> {
     let mut volumes = state.volumes.lock().await;
-    let volume = volumes.iter_mut().find(|v| v.id == id).ok_or(StatusCode::NOT_FOUND)?;
+    let volume = volumes
+        .iter_mut()
+        .find(|v| v.id == id)
+        .ok_or(StatusCode::NOT_FOUND)?;
     let old_size = volume.size_bytes;
     let pool_id = volume.pool_id;
     if let Some(name) = body.name {
@@ -258,10 +261,7 @@ pub async fn update_volume(
     Ok(Json(resp))
 }
 
-pub async fn delete_volume(
-    State(state): State<Arc<AppState>>,
-    Path(id): Path<Uuid>,
-) -> StatusCode {
+pub async fn delete_volume(State(state): State<Arc<AppState>>, Path(id): Path<Uuid>) -> StatusCode {
     let mut volumes = state.volumes.lock().await;
     let Some(idx) = volumes.iter().position(|v| v.id == id) else {
         return StatusCode::NOT_FOUND;

@@ -1,4 +1,4 @@
-﻿use std::sync::Mutex;
+use std::sync::Mutex;
 
 use chrono::Utc;
 use uuid::Uuid;
@@ -127,7 +127,12 @@ fn paginate<T: Clone + serde::Serialize>(
     let total = items.len() as i64;
     let total_pages = ((total as f64) / (per_page as f64)).ceil() as i64;
     let offset = ((page - 1) * per_page) as usize;
-    let data = items.iter().skip(offset).take(per_page as usize).cloned().collect();
+    let data = items
+        .iter()
+        .skip(offset)
+        .take(per_page as usize)
+        .cloned()
+        .collect();
     PaginatedResponse {
         data,
         page,

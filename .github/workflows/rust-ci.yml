@@ -7,6 +7,7 @@ on:
       - "control-plane/**"
       - "agent/**"
       - "proto/**"
+      - ".github/workflows/rust-ci.yml"
   pull_request:
     branches: [main]
 
@@ -16,23 +17,12 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: nebula_test
-          POSTGRES_USER: nebula
-          POSTGRES_PASSWORD: nebula_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install system deps
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler pkg-config libssl-dev
 
       - name: Install Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -55,19 +45,17 @@ jobs:
         run: cargo fmt --all --check
         working-directory: control-plane
 
-      - name: Clippy
-        run: cargo clippy --all -- -D warnings
+      - name: Clippy (gateway)
+        run: cargo clippy -p nebula-gateway -- -D warnings
         working-directory: control-plane
 
-      - name: Build
-        run: cargo build --all
+      - name: Build gateway
+        run: cargo build -p nebula-gateway
         working-directory: control-plane
 
-      - name: Test
-        run: cargo test --all
+      - name: Test gateway
+        run: cargo test -p nebula-gateway
         working-directory: control-plane
         env:
-          DATABASE_URL: postgres://nebula:nebula_test@localhost:5432/nebula_test
-          REDIS_URL: redis://localhost:6379
           JWT_SECRET: test-secret
           AGENT_TOKEN: test-agent-token

@@ -1,7 +1,11 @@
-use axum::{Json, extract::{State, Path, Extension}, http::StatusCode};
+use axum::{
+    extract::{Extension, Path, State},
+    http::StatusCode,
+    Json,
+};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 use std::sync::Arc;
+use uuid::Uuid;
 
 use crate::state::{AppState, StoredNode, StoredNodeMetrics};
 use crate::ws::hub::WsHub;
@@ -108,7 +112,12 @@ pub async fn get_by_id(
     Path(id): Path<Uuid>,
 ) -> Result<Json<NodeResponse>, StatusCode> {
     let nodes = state.nodes.lock().await;
-    nodes.iter().find(|n| n.id == id).map(node_to_response).map(Json).ok_or(StatusCode::NOT_FOUND)
+    nodes
+        .iter()
+        .find(|n| n.id == id)
+        .map(node_to_response)
+        .map(Json)
+        .ok_or(StatusCode::NOT_FOUND)
 }
 
 pub async fn update(
@@ -117,7 +126,10 @@ pub async fn update(
     Json(body): Json<UpdateNodeRequest>,
 ) -> Result<Json<NodeResponse>, StatusCode> {
     let mut nodes = state.nodes.lock().await;
-    let node = nodes.iter_mut().find(|n| n.id == id).ok_or(StatusCode::NOT_FOUND)?;
+    let node = nodes
+        .iter_mut()
+        .find(|n| n.id == id)
+        .ok_or(StatusCode::NOT_FOUND)?;
     if let Some(hostname) = body.hostname {
         node.hostname = hostname;
     }
@@ -127,10 +139,7 @@ pub async fn update(
     Ok(Json(node_to_response(node)))
 }
 
-pub async fn delete(
-    State(state): State<Arc<AppState>>,
-    Path(id): Path<Uuid>,
-) -> StatusCode {
+pub async fn delete(State(state): State<Arc<AppState>>, Path(id): Path<Uuid>) -> StatusCode {
     let mut nodes = state.nodes.lock().await;
     let idx = nodes.iter().position(|n| n.id == id);
     match idx {
@@ -156,7 +165,8 @@ pub async fn metrics_latest(
     Path(id): Path<Uuid>,
 ) -> Result<Json<NodeMetricsResponse>, StatusCode> {
     let metrics_map = state.node_metrics.lock().await;
-    metrics_map.get(&id)
+    metrics_map
+        .get(&id)
         .and_then(|v| v.last())
         .map(metrics_to_response)
         .map(Json)
@@ -216,7 +226,13 @@ pub async fn submit_metrics(
             node.last_seen_at = metrics.collected_at.clone();
         }
     }
-    state.node_metrics.lock().await.entry(id).or_default().push(metrics.clone());
+    state
+        .node_metrics
+        .lock()
+        .await
+        .entry(id)
+        .or_default()
+        .push(metrics.clone());
     let response = metrics_to_response(&metrics);
     if let Ok(data) = serde_json::to_value(&response) {
         hub.publish_typed("metrics", "metrics", &data).await;

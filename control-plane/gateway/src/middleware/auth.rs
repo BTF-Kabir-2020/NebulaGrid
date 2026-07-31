@@ -1,8 +1,8 @@
 use axum::{
     extract::{Request, State},
+    http::StatusCode,
     middleware::Next,
     response::Response,
-    http::StatusCode,
 };
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use std::sync::Arc;
@@ -28,7 +28,8 @@ pub async fn auth_middleware(
         token,
         &DecodingKey::from_secret(state.jwt_secret.as_bytes()),
         &Validation::default(),
-    ).map_err(|_| StatusCode::UNAUTHORIZED)?;
+    )
+    .map_err(|_| StatusCode::UNAUTHORIZED)?;
 
     req.extensions_mut().insert(token_data.claims);
 

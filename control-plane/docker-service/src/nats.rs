@@ -19,7 +19,13 @@ fn default_tail() -> usize {
     100
 }
 
-async fn nats_handler(nc: &Client, svc: &DockerService, subject: &str, reply: &str, payload: &[u8]) {
+async fn nats_handler(
+    nc: &Client,
+    svc: &DockerService,
+    subject: &str,
+    reply: &str,
+    payload: &[u8],
+) {
     let respond = |data: Vec<u8>| async move {
         let _ = nc.publish(reply.to_string(), data.into()).await;
     };
@@ -38,12 +44,14 @@ async fn nats_handler(nc: &Client, svc: &DockerService, subject: &str, reply: &s
             let action: ContainerAction = match serde_json::from_slice(payload) {
                 Ok(a) => a,
                 Err(e) => {
-                    respond(serde_json::to_vec(&ActionResult {
-                        success: false,
-                        message: format!("Invalid payload: {e}"),
-                        container_id: String::new(),
-                    })
-                    .unwrap())
+                    respond(
+                        serde_json::to_vec(&ActionResult {
+                            success: false,
+                            message: format!("Invalid payload: {e}"),
+                            container_id: String::new(),
+                        })
+                        .unwrap(),
+                    )
                     .await;
                     return;
                 }
@@ -54,12 +62,14 @@ async fn nats_handler(nc: &Client, svc: &DockerService, subject: &str, reply: &s
             let action: ContainerAction = match serde_json::from_slice(payload) {
                 Ok(a) => a,
                 Err(e) => {
-                    respond(serde_json::to_vec(&ActionResult {
-                        success: false,
-                        message: format!("Invalid payload: {e}"),
-                        container_id: String::new(),
-                    })
-                    .unwrap())
+                    respond(
+                        serde_json::to_vec(&ActionResult {
+                            success: false,
+                            message: format!("Invalid payload: {e}"),
+                            container_id: String::new(),
+                        })
+                        .unwrap(),
+                    )
                     .await;
                     return;
                 }
@@ -70,12 +80,14 @@ async fn nats_handler(nc: &Client, svc: &DockerService, subject: &str, reply: &s
             let action: ContainerAction = match serde_json::from_slice(payload) {
                 Ok(a) => a,
                 Err(e) => {
-                    respond(serde_json::to_vec(&ActionResult {
-                        success: false,
-                        message: format!("Invalid payload: {e}"),
-                        container_id: String::new(),
-                    })
-                    .unwrap())
+                    respond(
+                        serde_json::to_vec(&ActionResult {
+                            success: false,
+                            message: format!("Invalid payload: {e}"),
+                            container_id: String::new(),
+                        })
+                        .unwrap(),
+                    )
                     .await;
                     return;
                 }
@@ -86,12 +98,14 @@ async fn nats_handler(nc: &Client, svc: &DockerService, subject: &str, reply: &s
             let action: ContainerAction = match serde_json::from_slice(payload) {
                 Ok(a) => a,
                 Err(e) => {
-                    respond(serde_json::to_vec(&ActionResult {
-                        success: false,
-                        message: format!("Invalid payload: {e}"),
-                        container_id: String::new(),
-                    })
-                    .unwrap())
+                    respond(
+                        serde_json::to_vec(&ActionResult {
+                            success: false,
+                            message: format!("Invalid payload: {e}"),
+                            container_id: String::new(),
+                        })
+                        .unwrap(),
+                    )
                     .await;
                     return;
                 }
@@ -102,27 +116,32 @@ async fn nats_handler(nc: &Client, svc: &DockerService, subject: &str, reply: &s
             let req: ContainerLogsRequest = match serde_json::from_slice(payload) {
                 Ok(r) => r,
                 Err(e) => {
-                    respond(serde_json::to_vec(&ContainerLogs {
-                        id: String::new(),
-                        logs: format!("Invalid payload: {e}"),
-                    })
-                    .unwrap())
+                    respond(
+                        serde_json::to_vec(&ContainerLogs {
+                            id: String::new(),
+                            logs: format!("Invalid payload: {e}"),
+                        })
+                        .unwrap(),
+                    )
                     .await;
                     return;
                 }
             };
-            respond(serde_json::to_vec(&svc.get_container_logs(&req.id, req.tail).await).unwrap()).await;
+            respond(serde_json::to_vec(&svc.get_container_logs(&req.id, req.tail).await).unwrap())
+                .await;
         }
         "docker.delete" => {
             let action: ContainerAction = match serde_json::from_slice(payload) {
                 Ok(a) => a,
                 Err(e) => {
-                    respond(serde_json::to_vec(&ActionResult {
-                        success: false,
-                        message: format!("Invalid payload: {e}"),
-                        container_id: String::new(),
-                    })
-                    .unwrap())
+                    respond(
+                        serde_json::to_vec(&ActionResult {
+                            success: false,
+                            message: format!("Invalid payload: {e}"),
+                            container_id: String::new(),
+                        })
+                        .unwrap(),
+                    )
                     .await;
                     return;
                 }

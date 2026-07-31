@@ -1,4 +1,4 @@
-﻿use std::collections::HashMap;
+use std::collections::HashMap;
 use std::sync::Mutex;
 
 use chrono::Utc;
@@ -120,15 +120,15 @@ impl InventoryService {
     }
 }
 
-fn paginate<T: serde::Serialize>(
-    items: Vec<T>,
-    page: i64,
-    per_page: i64,
-) -> PaginatedResponse<T> {
+fn paginate<T: serde::Serialize>(items: Vec<T>, page: i64, per_page: i64) -> PaginatedResponse<T> {
     let total = items.len() as i64;
     let total_pages = ((total as f64) / (per_page as f64)).ceil() as i64;
     let offset = ((page - 1) * per_page) as usize;
-    let data = items.into_iter().skip(offset).take(per_page as usize).collect();
+    let data = items
+        .into_iter()
+        .skip(offset)
+        .take(per_page as usize)
+        .collect();
     PaginatedResponse {
         data,
         page,

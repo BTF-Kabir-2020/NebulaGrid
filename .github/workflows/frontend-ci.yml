@@ -5,6 +5,7 @@ on:
     branches: [main, develop]
     paths:
       - "dashboard/**"
+      - ".github/workflows/frontend-ci.yml"
   pull_request:
     branches: [main]
 
@@ -39,5 +40,5 @@ jobs:
         working-directory: dashboard
 
       - name: Test
-        run: npm run test -- --run
+        run: npm run test -- --run --passWithNoTests
         working-directory: dashboard

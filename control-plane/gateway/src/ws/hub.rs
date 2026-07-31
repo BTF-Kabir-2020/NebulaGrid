@@ -1,7 +1,7 @@
+use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::{RwLock, broadcast};
-use serde_json::json;
+use tokio::sync::{broadcast, RwLock};
 
 #[derive(Clone)]
 pub struct WsHub {

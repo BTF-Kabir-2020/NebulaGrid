@@ -1,4 +1,4 @@
-﻿use std::sync::Arc;
+use std::sync::Arc;
 
 use async_nats::Client;
 use futures::StreamExt;
@@ -110,7 +110,10 @@ async fn subscribe_list_schedules(nc: &Client, service: Arc<SchedulerService>) {
 }
 
 async fn subscribe_set_enabled(nc: &Client, service: Arc<SchedulerService>) {
-    let mut sub = nc.subscribe("scheduler.schedule.set_enabled").await.unwrap();
+    let mut sub = nc
+        .subscribe("scheduler.schedule.set_enabled")
+        .await
+        .unwrap();
     let nc = nc.clone();
     tokio::spawn(async move {
         while let Some(msg) = sub.next().await {

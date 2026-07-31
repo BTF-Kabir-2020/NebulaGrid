@@ -1,3 +1,3 @@
 pub mod auth;
-pub mod rbac;
 pub mod logging;
+pub mod rbac;

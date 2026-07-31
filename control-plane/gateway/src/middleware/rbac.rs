@@ -1,9 +1,4 @@
-use axum::{
-    extract::Request,
-    middleware::Next,
-    response::Response,
-    http::StatusCode,
-};
+use axum::{extract::Request, http::StatusCode, middleware::Next, response::Response};
 
 use crate::state::Claims;
 
@@ -17,7 +12,10 @@ pub enum Role {
 
 #[allow(dead_code)]
 pub async fn require_role(role: Role, req: Request, next: Next) -> Result<Response, StatusCode> {
-    let claims = req.extensions().get::<Claims>().ok_or(StatusCode::UNAUTHORIZED)?;
+    let claims = req
+        .extensions()
+        .get::<Claims>()
+        .ok_or(StatusCode::UNAUTHORIZED)?;
 
     let has_role = match role {
         Role::Admin => claims.roles.iter().any(|r| r == "admin"),

@@ -1,17 +1,17 @@
-use axum::{Router, routing::get, Extension, Json};
+use axum::{routing::get, Extension, Json, Router};
 use serde::Serialize;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use tracing_subscriber::EnvFilter;
 use std::sync::LazyLock;
 use std::time::Instant;
+use tracing_subscriber::EnvFilter;
 
 mod config;
-mod routes;
-mod middleware;
-mod ws;
 mod grpc;
+mod middleware;
+mod routes;
 mod state;
+mod ws;
 
 #[derive(Serialize)]
 struct HealthResponse {
@@ -47,13 +47,17 @@ pub fn create_router(state: Arc<state::AppState>) -> Router {
         .route("/ws", get(ws::handler::ws_handler))
         .merge(routes::create_routes(state))
         .layer(Extension(hub))
-        .layer(axum::middleware::from_fn(middleware::logging::request_logging))
+        .layer(axum::middleware::from_fn(
+            middleware::logging::request_logging,
+        ))
 }
 
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt()
-        .with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| "info,tower_http=debug".into()))
+        .with_env_filter(
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| "info,tower_http=debug".into()),
+        )
         .init();
 
     let config = config::GatewayConfig::load();
@@ -89,6 +93,8 @@ async fn main() {
 mod tests;
 
 async fn shutdown_signal() {
-    tokio::signal::ctrl_c().await.expect("Failed to install Ctrl+C handler");
+    tokio::signal::ctrl_c()
+        .await
+        .expect("Failed to install Ctrl+C handler");
     tracing::info!("Shutdown signal received, starting graceful shutdown...");
 }

@@ -1,7 +1,7 @@
+use chrono::Utc;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use uuid::Uuid;
-use chrono::Utc;
 
 use crate::models::*;
 
@@ -68,7 +68,10 @@ impl JobService {
     pub async fn list_jobs(&self, query: JobQuery) -> PaginatedResponse<Job> {
         let jobs = self.store.lock().await;
         let filtered: Vec<Job> = if let Some(ref status) = query.status {
-            jobs.iter().filter(|j| j.status == *status).cloned().collect()
+            jobs.iter()
+                .filter(|j| j.status == *status)
+                .cloned()
+                .collect()
         } else {
             jobs.clone()
         };
@@ -79,7 +82,11 @@ impl JobService {
         let total_pages = (total + per_page - 1) / per_page;
 
         let start = ((page - 1) * per_page) as usize;
-        let data: Vec<Job> = filtered.into_iter().skip(start).take(per_page as usize).collect();
+        let data: Vec<Job> = filtered
+            .into_iter()
+            .skip(start)
+            .take(per_page as usize)
+            .collect();
 
         PaginatedResponse {
             data,

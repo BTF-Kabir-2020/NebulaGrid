@@ -35,10 +35,11 @@ async fn subscribe_list_alerts(nc: &Client, service: Arc<MonitoringService>) {
     let nc = nc.clone();
     tokio::spawn(async move {
         while let Some(msg) = sub.next().await {
-            let query: ListAlertsQuery = serde_json::from_slice(&msg.payload).unwrap_or(ListAlertsQuery {
-                severity: None,
-                acknowledged: None,
-            });
+            let query: ListAlertsQuery =
+                serde_json::from_slice(&msg.payload).unwrap_or(ListAlertsQuery {
+                    severity: None,
+                    acknowledged: None,
+                });
 
             let alerts = service.list_alerts(query);
             if let Some(reply) = msg.reply {

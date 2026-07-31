@@ -1,12 +1,11 @@
-use std::collections::HashMap;
-use tokio::sync::Mutex;
-use uuid::Uuid;
-use serde::{Deserialize, Serialize};
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2,
 };
-
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use tokio::sync::Mutex;
+use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct StoredUser {
@@ -677,21 +676,19 @@ impl AppState {
             },
         ];
 
-        let jobs = vec![
-            StoredJob {
-                id: Uuid::new_v4(),
-                name: "nightly-backup".into(),
-                job_type: "backup".into(),
-                status: "completed".into(),
-                target_nodes: vec!["compute-1.nebula.internal".into()],
-                params: serde_json::json!({ "retention_days": 7 }),
-                result: Some(serde_json::json!({ "message": "Backup finished" })),
-                error: None,
-                created_at: "2025-06-15T02:00:00Z".into(),
-                started_at: Some("2025-06-15T02:00:01Z".into()),
-                completed_at: Some("2025-06-15T02:12:00Z".into()),
-            },
-        ];
+        let jobs = vec![StoredJob {
+            id: Uuid::new_v4(),
+            name: "nightly-backup".into(),
+            job_type: "backup".into(),
+            status: "completed".into(),
+            target_nodes: vec!["compute-1.nebula.internal".into()],
+            params: serde_json::json!({ "retention_days": 7 }),
+            result: Some(serde_json::json!({ "message": "Backup finished" })),
+            error: None,
+            created_at: "2025-06-15T02:00:00Z".into(),
+            started_at: Some("2025-06-15T02:00:01Z".into()),
+            completed_at: Some("2025-06-15T02:12:00Z".into()),
+        }];
 
         let inventory = vec![
             StoredInventoryItem {
@@ -916,12 +913,15 @@ impl AppState {
             api_tokens: Mutex::new(HashMap::new()),
             notification_prefs: {
                 let mut prefs = HashMap::new();
-                prefs.insert(admin_id, NotificationPrefs {
-                    email_alerts: true,
-                    email_digest: false,
-                    browser_alerts: true,
-                    slack_webhook: None,
-                });
+                prefs.insert(
+                    admin_id,
+                    NotificationPrefs {
+                        email_alerts: true,
+                        email_digest: false,
+                        browser_alerts: true,
+                        slack_webhook: None,
+                    },
+                );
                 Mutex::new(prefs)
             },
         }

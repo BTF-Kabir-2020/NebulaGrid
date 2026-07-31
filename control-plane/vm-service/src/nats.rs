@@ -25,10 +25,9 @@ async fn subscribe_vm_list(nc: &Client, service: Arc<VmService>) {
     let nc = nc.clone();
     tokio::spawn(async move {
         while let Some(msg) = sub.next().await {
-            let filter: Option<String> =
-                serde_json::from_slice::<Value>(&msg.payload)
-                    .ok()
-                    .and_then(|v| v.get("status").and_then(|s| s.as_str().map(String::from)));
+            let filter: Option<String> = serde_json::from_slice::<Value>(&msg.payload)
+                .ok()
+                .and_then(|v| v.get("status").and_then(|s| s.as_str().map(String::from)));
             let vms = service.list_vms(filter);
             if let Some(reply) = msg.reply {
                 if let Ok(payload) = serde_json::to_vec(&vms) {

@@ -1,7 +1,11 @@
-use axum::{Json, extract::{State, Path}, http::StatusCode};
+use axum::{
+    extract::{Path, State},
+    http::StatusCode,
+    Json,
+};
 use serde::Serialize;
-use uuid::Uuid;
 use std::sync::Arc;
+use uuid::Uuid;
 
 use crate::state::{AppState, StoredContainer};
 
@@ -78,7 +82,12 @@ pub async fn get_by_id(
     Path(id): Path<Uuid>,
 ) -> Result<Json<ContainerDetailResponse>, StatusCode> {
     let containers = state.containers.lock().await;
-    containers.iter().find(|c| c.id == id).map(to_detail_response).map(Json).ok_or(StatusCode::NOT_FOUND)
+    containers
+        .iter()
+        .find(|c| c.id == id)
+        .map(to_detail_response)
+        .map(Json)
+        .ok_or(StatusCode::NOT_FOUND)
 }
 
 pub async fn start(
@@ -86,12 +95,21 @@ pub async fn start(
     Path(id): Path<Uuid>,
 ) -> Result<Json<ActionResponse>, StatusCode> {
     let mut containers = state.containers.lock().await;
-    let container = containers.iter_mut().find(|c| c.id == id).ok_or(StatusCode::NOT_FOUND)?;
+    let container = containers
+        .iter_mut()
+        .find(|c| c.id == id)
+        .ok_or(StatusCode::NOT_FOUND)?;
     if container.status == "running" {
-        return Ok(Json(ActionResponse { success: false, message: "Container already running".into() }));
+        return Ok(Json(ActionResponse {
+            success: false,
+            message: "Container already running".into(),
+        }));
     }
     container.status = "running".into();
-    Ok(Json(ActionResponse { success: true, message: format!("Container {} started", container.name) }))
+    Ok(Json(ActionResponse {
+        success: true,
+        message: format!("Container {} started", container.name),
+    }))
 }
 
 pub async fn stop(
@@ -99,12 +117,21 @@ pub async fn stop(
     Path(id): Path<Uuid>,
 ) -> Result<Json<ActionResponse>, StatusCode> {
     let mut containers = state.containers.lock().await;
-    let container = containers.iter_mut().find(|c| c.id == id).ok_or(StatusCode::NOT_FOUND)?;
+    let container = containers
+        .iter_mut()
+        .find(|c| c.id == id)
+        .ok_or(StatusCode::NOT_FOUND)?;
     if container.status == "stopped" {
-        return Ok(Json(ActionResponse { success: false, message: "Container already stopped".into() }));
+        return Ok(Json(ActionResponse {
+            success: false,
+            message: "Container already stopped".into(),
+        }));
     }
     container.status = "stopped".into();
-    Ok(Json(ActionResponse { success: true, message: format!("Container {} stopped", container.name) }))
+    Ok(Json(ActionResponse {
+        success: true,
+        message: format!("Container {} stopped", container.name),
+    }))
 }
 
 pub async fn restart(
@@ -112,16 +139,19 @@ pub async fn restart(
     Path(id): Path<Uuid>,
 ) -> Result<Json<ActionResponse>, StatusCode> {
     let mut containers = state.containers.lock().await;
-    let container = containers.iter_mut().find(|c| c.id == id).ok_or(StatusCode::NOT_FOUND)?;
+    let container = containers
+        .iter_mut()
+        .find(|c| c.id == id)
+        .ok_or(StatusCode::NOT_FOUND)?;
     let name = container.name.clone();
     container.status = "running".into();
-    Ok(Json(ActionResponse { success: true, message: format!("Container {} restarted", name) }))
+    Ok(Json(ActionResponse {
+        success: true,
+        message: format!("Container {} restarted", name),
+    }))
 }
 
-pub async fn delete(
-    State(state): State<Arc<AppState>>,
-    Path(id): Path<Uuid>,
-) -> StatusCode {
+pub async fn delete(State(state): State<Arc<AppState>>, Path(id): Path<Uuid>) -> StatusCode {
     let mut containers = state.containers.lock().await;
     let idx = containers.iter().position(|c| c.id == id);
     match idx {
@@ -138,7 +168,10 @@ pub async fn logs(
     Path(id): Path<Uuid>,
 ) -> Result<Json<LogsResponse>, StatusCode> {
     let containers = state.containers.lock().await;
-    let container = containers.iter().find(|c| c.id == id).ok_or(StatusCode::NOT_FOUND)?;
+    let container = containers
+        .iter()
+        .find(|c| c.id == id)
+        .ok_or(StatusCode::NOT_FOUND)?;
     let ts = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%S");
     let key = format!("{} {}", container.name, container.image).to_lowercase();
     let body = if key.contains("nginx") {

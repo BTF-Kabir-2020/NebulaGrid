@@ -1,7 +1,7 @@
 use axum::{
-    Json,
     extract::{Path, State},
     http::StatusCode,
+    Json,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -48,7 +48,9 @@ fn to_response(j: &StoredJob) -> JobResponse {
     }
 }
 
-pub async fn list(State(state): State<Arc<AppState>>) -> Result<Json<Vec<JobResponse>>, StatusCode> {
+pub async fn list(
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<Vec<JobResponse>>, StatusCode> {
     let jobs = state.jobs.lock().await;
     Ok(Json(jobs.iter().map(to_response).collect()))
 }

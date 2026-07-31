@@ -1,9 +1,9 @@
+use super::hub::WsHub;
 use axum::{
-    extract::ws::{WebSocket, WebSocketUpgrade, Message},
+    extract::ws::{Message, WebSocket, WebSocketUpgrade},
     response::IntoResponse,
     Extension,
 };
-use super::hub::WsHub;
 
 pub async fn ws_handler(
     ws: WebSocketUpgrade,

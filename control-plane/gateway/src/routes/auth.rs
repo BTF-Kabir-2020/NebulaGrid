@@ -1,15 +1,15 @@
-use axum::{Json, extract::{State, Extension, Path}, http::StatusCode};
+use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
+use axum::{
+    extract::{Extension, Path, State},
+    http::StatusCode,
+    Json,
+};
+use chrono::{Duration, Utc};
+use jsonwebtoken::{encode, EncodingKey, Header};
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use jsonwebtoken::{encode, EncodingKey, Header};
-use chrono::{Utc, Duration};
 use uuid::Uuid;
-use argon2::{
-    PasswordHash, PasswordVerifier,
-    PasswordHasher,
-    Argon2,
-};
-use rand::Rng;
 
 use crate::state::{AppState, Claims, StoredApiToken};
 
@@ -39,7 +39,12 @@ pub struct UserInfo {
     pub roles: Vec<String>,
 }
 
-fn sign_jwt(state: &AppState, user_id: &str, username: &str, roles: &[String]) -> Result<String, StatusCode> {
+fn sign_jwt(
+    state: &AppState,
+    user_id: &str,
+    username: &str,
+    roles: &[String],
+) -> Result<String, StatusCode> {
     let now = Utc::now();
     let exp = (now + Duration::hours(24)).timestamp() as usize;
     let iat = now.timestamp() as usize;
@@ -56,7 +61,8 @@ fn sign_jwt(state: &AppState, user_id: &str, username: &str, roles: &[String]) -
         &Header::default(),
         &claims,
         &EncodingKey::from_secret(state.jwt_secret.as_bytes()),
-    ).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+    )
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
 }
 
 pub async fn login(
@@ -64,16 +70,24 @@ pub async fn login(
     Json(body): Json<LoginRequest>,
 ) -> Result<Json<LoginResponse>, StatusCode> {
     let users = state.users.lock().await;
-    let user = users.iter().find(|u| u.username == body.username).ok_or(StatusCode::UNAUTHORIZED)?;
+    let user = users
+        .iter()
+        .find(|u| u.username == body.username)
+        .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    let parsed_hash = PasswordHash::new(&user.password_hash).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let parsed_hash =
+        PasswordHash::new(&user.password_hash).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     Argon2::default()
         .verify_password(body.password.as_bytes(), &parsed_hash)
         .map_err(|_| StatusCode::UNAUTHORIZED)?;
 
     let token = sign_jwt(&state, &user.id.to_string(), &user.username, &user.roles)?;
     let refresh_token = Uuid::new_v4().to_string();
-    state.refresh_tokens.lock().await.insert(refresh_token.clone(), user.id.to_string());
+    state
+        .refresh_tokens
+        .lock()
+        .await
+        .insert(refresh_token.clone(), user.id.to_string());
 
     Ok(Json(LoginResponse {
         token,
@@ -93,13 +107,25 @@ pub async fn refresh(
     State(state): State<Arc<AppState>>,
     Json(body): Json<RefreshRequest>,
 ) -> Result<Json<RefreshResponse>, StatusCode> {
-    let user_id = state.refresh_tokens.lock().await.remove(&body.refresh_token).ok_or(StatusCode::UNAUTHORIZED)?;
+    let user_id = state
+        .refresh_tokens
+        .lock()
+        .await
+        .remove(&body.refresh_token)
+        .ok_or(StatusCode::UNAUTHORIZED)?;
     let users = state.users.lock().await;
-    let user = users.iter().find(|u| u.id.to_string() == user_id).ok_or(StatusCode::UNAUTHORIZED)?;
+    let user = users
+        .iter()
+        .find(|u| u.id.to_string() == user_id)
+        .ok_or(StatusCode::UNAUTHORIZED)?;
 
     let token = sign_jwt(&state, &user.id.to_string(), &user.username, &user.roles)?;
     let new_refresh_token = Uuid::new_v4().to_string();
-    state.refresh_tokens.lock().await.insert(new_refresh_token.clone(), user_id);
+    state
+        .refresh_tokens
+        .lock()
+        .await
+        .insert(new_refresh_token.clone(), user_id);
 
     Ok(Json(RefreshResponse {
         token,
@@ -113,9 +139,7 @@ pub struct LogoutResponse {
     pub message: String,
 }
 
-pub async fn logout(
-    State(state): State<Arc<AppState>>,
-) -> Json<LogoutResponse> {
+pub async fn logout(State(state): State<Arc<AppState>>) -> Json<LogoutResponse> {
     state.refresh_tokens.lock().await.clear();
     Json(LogoutResponse {
         message: "Logged out successfully".into(),
@@ -127,7 +151,10 @@ pub async fn me(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<UserInfo>, StatusCode> {
     let users = state.users.lock().await;
-    let user = users.iter().find(|u| u.id.to_string() == claims.sub).ok_or(StatusCode::NOT_FOUND)?;
+    let user = users
+        .iter()
+        .find(|u| u.id.to_string() == claims.sub)
+        .ok_or(StatusCode::NOT_FOUND)?;
 
     Ok(Json(UserInfo {
         id: user.id,
@@ -154,14 +181,19 @@ pub async fn change_password(
     Json(body): Json<ChangePasswordRequest>,
 ) -> Result<Json<ChangePasswordResponse>, StatusCode> {
     let mut users = state.users.lock().await;
-    let user = users.iter_mut().find(|u| u.id.to_string() == claims.sub).ok_or(StatusCode::NOT_FOUND)?;
+    let user = users
+        .iter_mut()
+        .find(|u| u.id.to_string() == claims.sub)
+        .ok_or(StatusCode::NOT_FOUND)?;
 
-    let parsed_hash = PasswordHash::new(&user.password_hash).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let parsed_hash =
+        PasswordHash::new(&user.password_hash).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     Argon2::default()
         .verify_password(body.current_password.as_bytes(), &parsed_hash)
         .map_err(|_| StatusCode::UNAUTHORIZED)?;
 
-    let salt = argon2::password_hash::SaltString::generate(&mut argon2::password_hash::rand_core::OsRng);
+    let salt =
+        argon2::password_hash::SaltString::generate(&mut argon2::password_hash::rand_core::OsRng);
     let new_hash = Argon2::default()
         .hash_password(body.new_password.as_bytes(), &salt)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
@@ -189,13 +221,18 @@ pub async fn list_tokens(
     let user_id = Uuid::parse_str(&claims.sub).map_err(|_| StatusCode::UNAUTHORIZED)?;
     let tokens = state.api_tokens.lock().await;
     let user_tokens = tokens.get(&user_id).cloned().unwrap_or_default();
-    Ok(Json(user_tokens.into_iter().map(|t| ApiTokenResponse {
-        id: t.id,
-        name: t.name,
-        token: t.token,
-        created_at: t.created_at,
-        last_used_at: t.last_used_at,
-    }).collect()))
+    Ok(Json(
+        user_tokens
+            .into_iter()
+            .map(|t| ApiTokenResponse {
+                id: t.id,
+                name: t.name,
+                token: t.token,
+                created_at: t.created_at,
+                last_used_at: t.last_used_at,
+            })
+            .collect(),
+    ))
 }
 
 #[derive(Deserialize)]

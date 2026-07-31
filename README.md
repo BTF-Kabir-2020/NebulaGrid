@@ -1,87 +1,104 @@
 # NebulaGrid
 
-**Infrastructure Control Plane (labs MVP)** — Rust + React
+**Infrastructure Control Plane** — Rust + React
 
-Unified management UI/API for servers, containers, VMs, Kubernetes, storage, backups, policies, certificates, config, and plugins.
+Manage servers, containers, VMs, Kubernetes, storage, backups, policies, certificates, configuration, and plugins from a single API and dashboard.
 
-[![Status](https://img.shields.io/badge/status-labs%20MVP-blue)](README.md)
-[![Gateway Tests](https://img.shields.io/badge/tests-7/7-green)](control-plane/gateway/tests/)
-[![Build](https://img.shields.io/badge/build-passing-green)](dashboard/)
+[![Rust CI](https://github.com/BTF-Kabir-2020/NebulaGrid/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/BTF-Kabir-2020/NebulaGrid/actions/workflows/rust-ci.yml)
+[![Frontend CI](https://github.com/BTF-Kabir-2020/NebulaGrid/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/BTF-Kabir-2020/NebulaGrid/actions/workflows/frontend-ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
+**Wiki:** [Architecture & guides](https://github.com/BTF-Kabir-2020/NebulaGrid/wiki) · **Docs:** [setup](docs/setup.md) · [API](docs/api.md)
 
 ---
 
-## Quick Start (Docker Compose — Full Stack)
+## Quick start
 
 ```bash
 docker compose -f labs/docker-compose.lab.yml --profile full up -d --build
-
-# Dashboard (Windows often reserves :3000 → mapped to :5173)
-open http://localhost:5173
-
-# Default login: admin / admin123
+# Dashboard: http://localhost:5173  (login admin / admin123)
+# API:       http://localhost:8080
 ```
 
-### Managers available in labs
-
-| Manager | UI | API |
-|---------|----|-----|
-| Node | `/servers` | `/api/nodes` |
-| Container | `/containers` | `/api/containers` |
-| VM (+ snapshot/backup actions) | `/vms` | `/api/vms` |
-| Storage | `/storage` | `/api/storage/*` |
-| Backup | `/backups` | `/api/backups` |
-| Metrics | `/monitoring` | `/api/monitoring/*`, `/api/nodes/:id/metrics` |
-| Inventory | `/inventory` | `/api/inventory` |
-| Network | `/networks` | `/api/networks` |
-| Policy | `/policies` | `/api/policies` |
-| Certificate | `/certificates` | `/api/certificates` |
-| Configuration | `/config` | `/api/config` |
-| Plugin | `/plugins` | `/api/plugins` |
-
-### Or run manually
+Manual:
 
 ```bash
-# Terminal 1 — Gateway
-cd control-plane
-$env:CARGO_TARGET_DIR = "..\.cargo-target"   # optional on Windows
-cargo run -p nebula-gateway
+# Gateway
+cd control-plane && cargo run -p nebula-gateway
 
-# Terminal 2 — Dashboard
+# Dashboard
 cd dashboard && npm install && npm run dev
 ```
 
 ---
 
-## Architecture (labs)
+## Architecture
 
 ```
-┌──────────────┐      ┌──────────────────────┐
-│  Dashboard   │      │  Lab Agent Simulators │
-│  (React+TS)  │      │  (Python × 3)         │
-│  Port 5173*  │      │  —                   │
-└──────┬───────┘      └──────────┬───────────┘
-       │ HTTP                     │ metrics POST
-       ▼                          ▼
-┌─────────────────────────────────────────────┐
-│              Gateway (Rust Axum)             │
-│  Port 8080  ·  REST + JWT + in-memory seed  │
-└─────────────────────────────────────────────┘
-* Host 3000/4222 are often Hyper-V reserved on Windows → lab maps 5173 and 14222.
+                         ┌─────────────────────────┐
+                         │   React Dashboard        │
+                         │   Vite · TypeScript      │
+                         │   :5173 (Compose)        │
+                         └───────────┬─────────────┘
+                                     │ HTTP / JWT
+                                     ▼
+┌────────────────────────────────────────────────────────────┐
+│                 Gateway (Rust · Axum)                       │
+│  Auth · RBAC · REST /api/* · WebSocket hub · seed state     │
+│  :8080                                                      │
+└───────┬──────────────┬──────────────┬───────────────────────┘
+        │              │              │
+        ▼              ▼              ▼
+   Agents / sims   Compose infra   Service crates
+   (metrics POST)  Postgres/Redis  (node, docker, vm,
+                   NATS (optional)  k8s, storage, …)
 ```
 
-Labs use **in-memory seed data** (restart clears state). Optional Postgres/Redis/NATS run under `--profile infra|full` for later production wiring — the gateway does not persist to them yet.
+### Repository layout
 
-> This repository is a **labs / MVP control-plane demo**, not a production infrastructure product.
+| Path | Role |
+|------|------|
+| `control-plane/gateway` | Main API gateway (Axum) |
+| `control-plane/*-service` | Domain service crates (NATS-oriented scaffolds) |
+| `dashboard` | React control UI |
+| `agent` | Rust host agent (sysinfo → gateway) |
+| `labs` | Docker Compose stack + Python agent simulators |
+| `deployment` | Dockerfiles, Compose, Helm, Terraform |
+| `proto` | gRPC / Protobuf definitions |
+| `docs` | Setup, API, architecture |
 
-## Docs
+### Managers (UI ↔ API)
 
-| Doc | Purpose |
-|-----|---------|
-| [docs/setup.md](docs/setup.md) | Dev setup |
-| [docs/api.md](docs/api.md) | API reference |
-| [labs/README.md](labs/README.md) | Compose profiles |
-| [docs/architecture.md](docs/architecture.md) | Target architecture |
+| Area | UI | API |
+|------|----|-----|
+| Nodes | `/servers` | `/api/nodes` |
+| Containers | `/containers` | `/api/containers` |
+| VMs | `/vms` | `/api/vms` |
+| Kubernetes | `/kubernetes` | `/api/k8s/*` |
+| Networks | `/networks` | `/api/networks` |
+| Storage | `/storage` | `/api/storage/*` |
+| Backups | `/backups` | `/api/backups` |
+| Monitoring / Logs | `/monitoring`, `/logs` | `/api/monitoring/*`, container logs |
+| Inventory / Policies | `/inventory`, `/policies` | `/api/inventory`, `/api/policies` |
+| Certificates / Config | `/certificates`, `/config` | `/api/certificates`, `/api/config` |
+| Plugins / Jobs / Alerts | `/plugins`, `/jobs`, `/alerts` | matching `/api/*` |
+
+Default credentials for local stacks: `admin` / `admin123`.
+
+> Gateway currently serves a rich in-memory control plane suitable for demos and development. Wire Postgres/Redis/NATS and edge TLS when hardening for long-lived deployments.
+
+---
+
+## Documentation
+
+| Resource | Link |
+|----------|------|
+| Wiki Home | [Wiki](https://github.com/BTF-Kabir-2020/NebulaGrid/wiki) |
+| Setup | [docs/setup.md](docs/setup.md) |
+| API reference | [docs/api.md](docs/api.md) |
+| Architecture | [docs/architecture.md](docs/architecture.md) |
+| Compose profiles | [labs/README.md](labs/README.md) |
+| Contributing | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
 ## License
 

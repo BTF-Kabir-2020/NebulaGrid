@@ -1,7 +1,7 @@
 use axum::{
-    Json,
     extract::{Path, State},
     http::StatusCode,
+    Json,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -97,7 +97,10 @@ pub async fn update(
     Json(body): Json<UpdatePluginRequest>,
 ) -> Result<Json<PluginResponse>, StatusCode> {
     let mut plugins = state.plugins.lock().await;
-    let plugin = plugins.iter_mut().find(|p| p.id == id).ok_or(StatusCode::NOT_FOUND)?;
+    let plugin = plugins
+        .iter_mut()
+        .find(|p| p.id == id)
+        .ok_or(StatusCode::NOT_FOUND)?;
     if let Some(enabled) = body.enabled {
         plugin.enabled = enabled;
     }

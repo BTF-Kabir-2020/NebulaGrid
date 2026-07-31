@@ -1,4 +1,4 @@
-use axum::{Json, extract::State, http::StatusCode};
+use axum::{extract::State, http::StatusCode, Json};
 use serde::Serialize;
 use std::sync::Arc;
 
@@ -49,50 +49,69 @@ pub async fn nodes(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<K8sNodeResponse>>, StatusCode> {
     let k8s_nodes = state.k8s_nodes.lock().await;
-    Ok(Json(k8s_nodes.iter().map(|n| K8sNodeResponse {
-        name: n.name.clone(),
-        status: n.status.clone(),
-        version: n.version.clone(),
-        pod_count: n.pod_count,
-    }).collect()))
+    Ok(Json(
+        k8s_nodes
+            .iter()
+            .map(|n| K8sNodeResponse {
+                name: n.name.clone(),
+                status: n.status.clone(),
+                version: n.version.clone(),
+                pod_count: n.pod_count,
+            })
+            .collect(),
+    ))
 }
 
 pub async fn pods(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<PodResponse>>, StatusCode> {
     let pods = state.k8s_pods.lock().await;
-    Ok(Json(pods.iter().map(|p| PodResponse {
-        name: p.name.clone(),
-        namespace: p.namespace.clone(),
-        status: p.status.clone(),
-        node: p.node.clone(),
-        pod_ip: p.pod_ip.clone(),
-    }).collect()))
+    Ok(Json(
+        pods.iter()
+            .map(|p| PodResponse {
+                name: p.name.clone(),
+                namespace: p.namespace.clone(),
+                status: p.status.clone(),
+                node: p.node.clone(),
+                pod_ip: p.pod_ip.clone(),
+            })
+            .collect(),
+    ))
 }
 
 pub async fn deployments(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<DeploymentResponse>>, StatusCode> {
     let deployments = state.k8s_deployments.lock().await;
-    Ok(Json(deployments.iter().map(|d| DeploymentResponse {
-        name: d.name.clone(),
-        namespace: d.namespace.clone(),
-        replicas: d.replicas,
-        available_replicas: d.available_replicas,
-    }).collect()))
+    Ok(Json(
+        deployments
+            .iter()
+            .map(|d| DeploymentResponse {
+                name: d.name.clone(),
+                namespace: d.namespace.clone(),
+                replicas: d.replicas,
+                available_replicas: d.available_replicas,
+            })
+            .collect(),
+    ))
 }
 
 pub async fn services(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<ServiceResponse>>, StatusCode> {
     let services = state.k8s_services.lock().await;
-    Ok(Json(services.iter().map(|s| ServiceResponse {
-        name: s.name.clone(),
-        namespace: s.namespace.clone(),
-        cluster_ip: s.cluster_ip.clone(),
-        ports: s.ports.clone(),
-        type_: s.type_.clone(),
-    }).collect()))
+    Ok(Json(
+        services
+            .iter()
+            .map(|s| ServiceResponse {
+                name: s.name.clone(),
+                namespace: s.namespace.clone(),
+                cluster_ip: s.cluster_ip.clone(),
+                ports: s.ports.clone(),
+                type_: s.type_.clone(),
+            })
+            .collect(),
+    ))
 }
 
 pub async fn namespaces(
@@ -118,8 +137,13 @@ pub async fn namespaces(
         }
     }
 
-    Ok(Json(ns_set.into_iter().map(|name| NamespaceResponse {
-        name,
-        status: "Active".into(),
-    }).collect()))
+    Ok(Json(
+        ns_set
+            .into_iter()
+            .map(|name| NamespaceResponse {
+                name,
+                status: "Active".into(),
+            })
+            .collect(),
+    ))
 }
