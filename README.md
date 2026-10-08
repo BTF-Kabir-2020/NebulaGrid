@@ -10,6 +10,8 @@ Manage servers, containers, VMs, Kubernetes, storage, backups, policies, certifi
 
 **Wiki:** [Architecture & guides](https://github.com/BTF-Kabir-2020/NebulaGrid/wiki) · **Docs:** [setup](docs/setup.md) · [API](docs/api.md)
 
+> **Status: early development.** The gateway currently serves an **in-memory** control plane for demos and development. See [Status & roadmap](#status--roadmap) for what is implemented, experimental, and planned.
+
 ---
 
 ## Quick start
@@ -85,7 +87,26 @@ cd dashboard && npm install && npm run dev
 
 Default credentials for local stacks: `admin` / `admin123`.
 
-> Gateway currently serves a rich in-memory control plane suitable for demos and development. Wire Postgres/Redis/NATS and edge TLS when hardening for long-lived deployments.
+> Persistence (Postgres/Redis/NATS) and edge TLS are **planned** — see [Status & roadmap](#status--roadmap).
+
+---
+
+## Status & roadmap
+
+Honest maturity labels for this repository. **Implemented** = works in the current code path. **Experimental** = API/UI exist and are exercised against the in-memory control plane, but the backing provider is not production-wired yet. **Planned** = designed, not yet built.
+
+| Area | Status |
+|------|--------|
+| Axum gateway — REST `/api/*`, JWT auth, RBAC, WebSocket hub | Implemented |
+| React dashboard (Vite · TypeScript) with routing to all managers | Implemented |
+| Docker Compose local stack + host agent metrics | Implemented |
+| CI for Rust and frontend | Implemented |
+| Domain service crates (node, docker, vm, k8s, storage, …) | Experimental (scaffolds) |
+| Managers surfaced in UI/API (K8s, VMs, storage, backups, policies, certificates, plugins) | Experimental (in-memory backing) |
+| Postgres / Redis / NATS persistence | Planned |
+| Edge TLS and long-lived deployment hardening | Planned |
+
+Contributions toward the **Planned** items are especially welcome.
 
 ---
 
